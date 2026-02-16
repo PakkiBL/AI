@@ -1,48 +1,80 @@
 import streamlit as st
-from openai import OpenAI
-from gtts import gTTS
-from io import BytesIO
 
-# --------------------
-# Setup
-# --------------------
-st.set_page_config(page_title="AI Advocate Pro", page_icon="⚖️")
-
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+st.set_page_config(page_title="AI Advocate", page_icon="⚖️")
 
 st.title("⚖️ AI Advocate - Legal Assistant")
-st.write("Type your legal issue. AI will respond with guidance and voice.")
+st.write("Describe your legal issue. The AI Advocate will guide you.")
 
-# --------------------
-# Input
-# --------------------
-user_input = st.text_area("Describe your legal issue:")
+# ----------------------------
+# Legal Knowledge Base
+# ----------------------------
 
-if st.button("Get Legal Advice"):
+legal_database = {
+    "divorce": {
+        "category": "Family Law",
+        "law": "Hindu Marriage Act, 1955",
+        "advice": "You can file for divorce on grounds like cruelty, desertion, adultery, etc. Mutual consent divorce is also possible if both parties agree."
+    },
+    "domestic violence": {
+        "category": "Family Law",
+        "law": "Protection of Women from Domestic Violence Act, 2005",
+        "advice": "You can file a complaint at the nearest police station or approach a protection officer. You may also request protection, residence, or maintenance orders."
+    },
+    "cyber": {
+        "category": "Cyber Crime",
+        "law": "Information Technology Act, 2000 (Section 66)",
+        "advice": "Cyber crimes like hacking, fraud, and identity theft can be reported at cybercrime.gov.in or your local police station."
+    },
+    "property": {
+        "category": "Property Law",
+        "law": "Transfer of Property Act, 1882",
+        "advice": "Property disputes can be resolved through civil court. Ensure proper documentation and ownership proof."
+    },
+    "salary": {
+        "category": "Labour Law",
+        "law": "Payment of Wages Act, 1936",
+        "advice": "If your employer is not paying salary, you can file a complaint with the labour commissioner."
+    },
+    "cheque": {
+        "category": "Financial Law",
+        "law": "Negotiable Instruments Act, 1881 (Section 138)",
+        "advice": "Cheque bounce cases can be filed in court within 30 days after receiving bank memo."
+    },
+    "arrest": {
+        "category": "Criminal Law",
+        "law": "Criminal Procedure Code (CrPC)",
+        "advice": "You have the right to know the reason for arrest and the right to a lawyer."
+    }
+}
+
+# ----------------------------
+# User Input
+# ----------------------------
+
+user_input = st.text_area("Enter your legal issue:")
+
+if st.button("Analyze Case"):
     if user_input:
+        user_input_lower = user_input.lower()
 
-        with st.spinner("Analyzing your case..."):
+        found = False
 
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are an Indian legal assistant. Provide helpful preliminary legal guidance with disclaimer."},
-                    {"role": "user", "content": user_input}
-                ]
-            )
+        for keyword in legal_database:
+            if keyword in user_input_lower:
+                data = legal_database[keyword]
 
-            answer = response.choices[0].message.content
+                st.success(f"📌 Case Type: {data['category']}")
+                st.info(f"📖 Relevant Law: {data['law']}")
+                st.write(f"💡 Guidance: {data['advice']}")
 
-            st.success("AI Legal Advice:")
-            st.write(answer)
+                found = True
+                break
 
-            # Voice Output
-            tts = gTTS(answer)
-            audio_file = BytesIO()
-            tts.write_to_fp(audio_file)
-            st.audio(audio_file.getvalue())
+        if not found:
+            st.warning("⚠️ Sorry, this issue is not in the current legal database.")
+            st.write("Please consult a certified advocate for professional advice.")
 
-            st.warning("⚠️ This is AI-generated guidance. Please consult a certified advocate for official legal advice.")
+        st.warning("⚖️ Disclaimer: This is AI-generated preliminary legal guidance. For official advice, consult a qualified advocate.")
 
     else:
-        st.error("Please enter your legal issue.")
+        st.error("Please describe your issue.")
