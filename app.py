@@ -1,24 +1,21 @@
 import streamlit as st
-import openai
+from openai import OpenAI
 from gtts import gTTS
-import os
 from io import BytesIO
 
-# ----------------------
-# SET API KEY
-# ----------------------
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
-
+# --------------------
+# Setup
+# --------------------
 st.set_page_config(page_title="AI Advocate Pro", page_icon="⚖️")
 
-st.title("⚖️ AI Advocate - Voice Legal Assistant")
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-st.write("Speak or type your legal issue. AI will respond with guidance.")
+st.title("⚖️ AI Advocate - Legal Assistant")
+st.write("Type your legal issue. AI will respond with guidance and voice.")
 
-# ----------------------
-# USER INPUT
-# ----------------------
+# --------------------
+# Input
+# --------------------
 user_input = st.text_area("Describe your legal issue:")
 
 if st.button("Get Legal Advice"):
@@ -26,7 +23,7 @@ if st.button("Get Legal Advice"):
 
         with st.spinner("Analyzing your case..."):
 
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are an Indian legal assistant. Provide helpful preliminary legal guidance with disclaimer."},
@@ -34,20 +31,18 @@ if st.button("Get Legal Advice"):
                 ]
             )
 
-            answer = response["choices"][0]["message"]["content"]
+            answer = response.choices[0].message.content
 
             st.success("AI Legal Advice:")
             st.write(answer)
 
-            # ----------------------
-            # TEXT TO SPEECH
-            # ----------------------
+            # Voice Output
             tts = gTTS(answer)
             audio_file = BytesIO()
             tts.write_to_fp(audio_file)
             st.audio(audio_file.getvalue())
 
-            st.warning("⚠️ This is AI-generated guidance. Consult a certified advocate for official legal advice.")
+            st.warning("⚠️ This is AI-generated guidance. Please consult a certified advocate for official legal advice.")
 
     else:
         st.error("Please enter your legal issue.")
