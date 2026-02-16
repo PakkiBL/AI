@@ -7,7 +7,8 @@ from io import BytesIO
 # ----------------------
 # SET API KEY
 # ----------------------
-openai.api_key = st.secrets["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"]
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
 
 st.set_page_config(page_title="AI Advocate Pro", page_icon="⚖️")
 
