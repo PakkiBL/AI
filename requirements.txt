@@ -1,1 +1,3 @@
-pip install streamlit scikit-learn pandas
+streamlit
+pandas
+scikit-learn
