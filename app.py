@@ -1,80 +1,52 @@
 import streamlit as st
-import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
+import openai
+from gtts import gTTS
+import os
+from io import BytesIO
 
-# ----------------------------
-# Sample Legal Dataset
-# ----------------------------
-data = {
-    "text": [
-        "My husband is asking for divorce",
-        "Someone hacked my Instagram account",
-        "My landlord is not returning deposit",
-        "Police arrested me without reason",
-        "Property dispute between brothers",
-        "Online fraud transaction happened",
-        "Domestic violence issue",
-        "Cyber bullying case",
-        "Cheque bounce problem",
-        "Company not paying salary"
-    ],
-    "label": [
-        "Family Law",
-        "Cyber Crime",
-        "Property Law",
-        "Criminal Law",
-        "Property Law",
-        "Cyber Crime",
-        "Family Law",
-        "Cyber Crime",
-        "Financial Law",
-        "Labour Law"
-    ]
-}
+# ----------------------
+# SET API KEY
+# ----------------------
+openai.api_key = st.secrets["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"]
 
-df = pd.DataFrame(data)
+st.set_page_config(page_title="AI Advocate Pro", page_icon="⚖️")
 
-# ----------------------------
-# ML Model Training
-# ----------------------------
-vectorizer = CountVectorizer()
-X = vectorizer.fit_transform(df["text"])
-model = MultinomialNB()
-model.fit(X, df["label"])
+st.title("⚖️ AI Advocate - Voice Legal Assistant")
 
-# ----------------------------
-# IPC Reference Dictionary
-# ----------------------------
-ipc_sections = {
-    "Cyber Crime": "IT Act 2000 - Section 66",
-    "Family Law": "Hindu Marriage Act 1955",
-    "Property Law": "Transfer of Property Act 1882",
-    "Criminal Law": "IPC Section 41",
-    "Financial Law": "Negotiable Instruments Act 1881",
-    "Labour Law": "Payment of Wages Act 1936"
-}
+st.write("Speak or type your legal issue. AI will respond with guidance.")
 
-# ----------------------------
-# Streamlit UI
-# ----------------------------
-st.set_page_config(page_title="AI Advocate", page_icon="⚖️", layout="centered")
-
-st.title("⚖️ AI Advocate - Legal Assistant")
-st.write("Get preliminary legal guidance instantly.")
-
+# ----------------------
+# USER INPUT
+# ----------------------
 user_input = st.text_area("Describe your legal issue:")
 
-if st.button("Analyze Case"):
+if st.button("Get Legal Advice"):
     if user_input:
-        input_vector = vectorizer.transform([user_input])
-        prediction = model.predict(input_vector)[0]
 
-        st.success(f"📌 Case Type Identified: {prediction}")
+        with st.spinner("Analyzing your case..."):
 
-        if prediction in ipc_sections:
-            st.info(f"📖 Relevant Law: {ipc_sections[prediction]}")
+            response = openai.ChatCompletion.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are an Indian legal assistant. Provide helpful preliminary legal guidance with disclaimer."},
+                    {"role": "user", "content": user_input}
+                ]
+            )
 
-        st.warning("⚠️ Disclaimer: This is AI-generated preliminary guidance. Please consult a certified advocate for official legal advice.")
+            answer = response["choices"][0]["message"]["content"]
+
+            st.success("AI Legal Advice:")
+            st.write(answer)
+
+            # ----------------------
+            # TEXT TO SPEECH
+            # ----------------------
+            tts = gTTS(answer)
+            audio_file = BytesIO()
+            tts.write_to_fp(audio_file)
+            st.audio(audio_file.getvalue())
+
+            st.warning("⚠️ This is AI-generated guidance. Consult a certified advocate for official legal advice.")
+
     else:
-        st.error("Please describe your issue.")
+        st.error("Please enter your legal issue.")
